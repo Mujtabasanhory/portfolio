@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0f3d5e" />
+  <meta name="description" content="نسخة تجريبية لنظام WorkTrack للحضور والانصراف وتتبع مواقع العمال" />
+  <title>WorkTrack | نظام حضور العمال</title>
+  <link rel="preconnect" href="https://unpkg.com" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIINfQ3ynMPHy80HnZqirG+ZQWjkQxG0nGU=" crossorigin="" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <section id="loginView" class="login-view">
+    <div class="login-card">
+      <div class="brand-mark">W</div>
+      <h1>WorkTrack</h1>
+      <p>نظام حضور وانصراف ومتابعة مواقع العمال</p>
+      <form id="loginForm">
+        <label>رقم الموظف</label>
+        <input id="employeeId" inputmode="numeric" value="1001" autocomplete="username" required />
+        <label>كلمة المرور</label>
+        <input id="password" type="password" value="123456" autocomplete="current-password" required />
+        <label>نوع الدخول</label>
+        <div class="role-toggle">
+          <button type="button" class="role-btn active" data-role="worker">عامل</button>
+          <button type="button" class="role-btn" data-role="admin">إدارة</button>
+        </div>
+        <button class="primary wide" type="submit">دخول إلى النظام</button>
+      </form>
+      <small>بيانات التجربة: 1001 / 123456</small>
+    </div>
+  </section>
+
+  <div id="appView" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="sidebar-brand"><span>W</span><strong>WorkTrack</strong></div>
+      <nav id="sideNav"></nav>
+      <button id="logoutBtn" class="logout-btn">تسجيل الخروج</button>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <h2 id="pageTitle">لوحة العامل</h2>
+          <p id="pageSubtitle">مشروع برج الأعمال — المدينة المنورة</p>
+        </div>
+        <div class="user-chip">
+          <div class="avatar">م</div>
+          <div><strong id="userName">محمد أحمد</strong><small id="userRole">عامل</small></div>
+        </div>
+      </header>
+
+      <section id="workerDashboard" class="page-section">
+        <div class="hero-status">
+          <div>
+            <span id="liveBadge" class="status-badge neutral">لم يبدأ الدوام</span>
+            <h3>مرحبًا، محمد</h3>
+            <p id="clockText">جاري تحميل الوقت...</p>
+          </div>
+          <div class="shift-box"><small>الوردية</small><strong>07:00 ص — 04:00 م</strong></div>
+        </div>
+
+        <div class="stats-grid four">
+          <article class="stat-card"><span>حالة الموقع</span><strong id="zoneStatus">غير محدد</strong><small id="distanceText">فعّل GPS للتحقق</small></article>
+          <article class="stat-card"><span>وقت الحضور</span><strong id="checkInTime">--:--</strong><small>اليوم</small></article>
+          <article class="stat-card"><span>ساعات العمل</span><strong id="workedHours">00:00</strong><small>تتحدث تلقائيًا</small></article>
+          <article class="stat-card"><span>دقة الموقع</span><strong id="accuracyText">--</strong><small>بالمتر</small></article>
+        </div>
+
+        <div class="content-grid">
+          <article class="panel map-panel">
+            <div class="panel-head"><div><h3>موقعك الحالي</h3><p>النطاق المسموح 250 مترًا</p></div><button id="locateBtn" class="secondary">تحديث الموقع</button></div>
+            <div id="workerMap" class="map"></div>
+          </article>
+
+          <article class="panel attendance-panel">
+            <h3>تسجيل الحضور والانصراف</h3>
+            <div class="selfie-preview" id="selfiePreview"><span>📷</span><p>سيلفي التحقق سيظهر هنا</p></div>
+            <input id="cameraInput" type="file" accept="image/*" capture="user" hidden />
+            <button id="selfieBtn" class="secondary wide">التقاط سيلفي</button>
+            <button id="attendanceBtn" class="primary wide" disabled>تسجيل الحضور</button>
+            <p class="hint">يجب السماح بالموقع والتقاط سيلفي قبل التسجيل.</p>
+          </article>
+        </div>
+
+        <article class="panel">
+          <div class="panel-head"><div><h3>سجل اليوم</h3><p>آخر العمليات المسجلة</p></div></div>
+          <div id="todayTimeline" class="timeline"><div class="empty-state">لا توجد عمليات حتى الآن</div></div>
+        </article>
+      </section>
+
+      <section id="adminDashboard" class="page-section hidden">
+        <div class="stats-grid four">
+          <article class="stat-card accent"><span>إجمالي العمال</span><strong>48</strong><small>في المشروع الحالي</small></article>
+          <article class="stat-card success"><span>داخل الموقع</span><strong id="insideCount">39</strong><small>81% من العمال</small></article>
+          <article class="stat-card danger"><span>خارج النطاق</span><strong id="outsideCount">3</strong><small>تحتاج متابعة</small></article>
+          <article class="stat-card warning"><span>غائبون</span><strong>6</strong><small>لم يسجلوا الحضور</small></article>
+        </div>
+
+        <div class="content-grid admin-grid">
+          <article class="panel map-panel">
+            <div class="panel-head"><div><h3>الخريطة المباشرة</h3><p>مواقع تجريبية للعمال داخل وخارج المشروع</p></div><span class="live-dot">● مباشر</span></div>
+            <div id="adminMap" class="map large"></div>
+          </article>
+          <article class="panel alerts-panel">
+            <div class="panel-head"><div><h3>التنبيهات</h3><p>أحدث أحداث الخروج من النطاق</p></div><button id="simulateAlert" class="secondary">محاكاة تنبيه</button></div>
+            <div id="alertList" class="alert-list"></div>
+          </article>
+        </div>
+
+        <article class="panel">
+          <div class="panel-head">
+            <div><h3>حالة العمال</h3><p>تصفية حسب الاسم أو الحالة</p></div>
+            <div class="filters"><input id="workerSearch" placeholder="ابحث عن عامل..." /><select id="statusFilter"><option value="all">كل الحالات</option><option value="inside">داخل الموقع</option><option value="outside">خارج النطاق</option><option value="absent">غائب</option></select></div>
+          </div>
+          <div class="table-wrap">
+            <table><thead><tr><th>العامل</th><th>رقم الموظف</th><th>المهنة</th><th>الحضور</th><th>الحالة</th><th>آخر تحديث</th></tr></thead><tbody id="workersTable"></tbody></table>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="app.js"></script>
+</body>
+</html>
